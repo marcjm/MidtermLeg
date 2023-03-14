@@ -1,0 +1,84 @@
+%MATLAB Code
+%we will need a set of points that we want to follow around, which we can
+%get using a graphing software like desmos. We are trying to do an arc
+%forward
+dots = [0 -16;...
+1 -13;...
+2 -11;...
+4 -10;...
+6 -10;...
+8 -11;...
+9.5 -13;...
+10 -15;...
+10.1 -16];
+
+plotter = 20;
+
+%Let's divide our curve into two halfs to make splines with them
+%This will be the left side of curve we need to separate x and y components
+CurveLeftX = dots(1:4,1);
+CurveLeftY = dots(1:4,2);
+%We can use linspace to sort of plot however many points we want here we
+%are going for the plotter value so 20 points
+x1 = linspace(CurveLeftX(1),CurveLeftX(4),plotter);
+y1 = spline(CurveLeftX,CurveLeftY,x1);
+
+%we have a quick flat line at the top
+TopLineX = dots(4:5,1);
+TopLineY = dots(4:5,2);
+x2 = linspace(TopLineX(1),TopLineX(2),plotter);
+y2 = linspace(TopLineY(1),TopLineY(2),plotter);
+
+%Now we need to break down the right side of the curve.
+CurveRightX = dots(5:9,1);
+CurveRightY = dots(5:9,2);
+x3 = linspace(CurveRightX(1),CurveRightX(4),plotter); 
+y3 = spline(CurveRightX,CurveRightY,x3);
+
+
+% We have all of these intermediate points in x1, x2, x3... let's put it all
+%together 
+x =[x1,x2,x3];
+y =[y1,y2,y3];
+
+% Now time for the fun part...or not so fun part, inverse kinematics.
+%We need to set our Values
+L1 = 7;
+L2 = 13; 
+%Now for a loop so that we can do loop through all points and take the
+%difference for angle movement we need. 
+
+for i = 1: length(x)
+    L3 = sqrt(x(i)^2+y(i)^2);
+    Betha1 = (-(L2^2 - L1^2 - L3^2)/(2*L1*L3));
+    Alpha1 = atan2(Betha1,sqrt(1-Betha1^2));
+    Thetha1(i) = (atan2(x(i),y(i))-Alpha1)*(180/pi);
+    Betha2 = (-(L3^2 - L1^2 - L2^2)/(2* L1 *L2));
+    Alpha2 = atan2(Betha2, sqrt(1- Betha2^2));
+    Thetha2(i) = (pi-Alpha2)*(180/pi);
+    %We need to do condition to remove angle differences after first
+    %iteration
+
+    if i > 1
+        Angle1Diff(i) = abs(Thetha1(i)- Thetha1(i-1));
+        Angle2Diff(i) = abs(Thetha2(i) - Thetha2(i-1));
+    end
+
+end
+
+
+%Now for plotting 
+plot (CurveLeftX, CurveLeftY, 'o', x1, y1)
+hold on
+plot (TopLineX, TopLineY, 'o', x2, y2)
+plot (CurveRightX, CurveRightY, 'o', x3, y3)
+hold off
+
+%We need to reformat it to be able to paste in our code later 
+anglelist1 = sprintf('%.6f,' , Angle1Diff);
+anglelist1 = anglelist1(1:end-1);
+anglelist1
+
+anglelist2 = sprintf('%.6f,' , Angle2Diff);
+anglelist2 = anglelist2(1:end-1);
+anglelist2
